@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Калькулятор доходности стратегии Владимир Фокейчев — Россия</title>
+<style>
+:root{
+  --panel:rgba(255,255,255,.06);
+  --panel-border:rgba(255,255,255,.09);
+  --text:#ffffff;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:linear-gradient(180deg,#020617 0%,#0f172a 100%);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+.wrap{max-width:1340px;margin:0 auto;padding:24px}
+.badge{display:inline-block;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.08);color:#cbd5e1;font-size:14px;margin-bottom:16px}
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:24px;align-items:end;margin-bottom:24px}
+h1{margin:0;font-size:44px;line-height:1.05}
+.subtitle{margin-top:16px;color:var(--muted);font-size:18px;line-height:1.6;max-width:860px}
+.box,.card,.info{background:var(--panel);border:1px solid var(--panel-border);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.box{padding:24px}
+.result-label{color:var(--muted);font-size:14px;margin-bottom:8px}
+.result-value{font-size:32px;font-weight:700;line-height:1.2}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:24px}
+.panel-title,.card-title{font-size:22px;font-weight:700;margin-bottom:18px}
+.field{margin-bottom:18px}
+label{display:block;font-size:14px;color:#e2e8f0;margin-bottom:8px}
+input,select{width:100%;padding:14px;border-radius:12px;border:1px solid #334155;background:#020617;color:#fff;font-size:16px;outline:none}
+.hint{margin-top:8px;color:var(--muted);font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.stat,.info{padding:20px}
+.stat-title{color:var(--muted);font-size:14px;margin-bottom:8px}
+.stat-value{font-size:28px;font-weight:700;line-height:1.2}
+.stat-hint{margin-top:8px;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.card{padding:24px;margin-bottom:16px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px 10px;border-bottom:1px solid rgba(148,163,184,.14);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:#cbd5e1;font-weight:600;font-size:13px}
+td{color:#e2e8f0;font-size:14px}
+.bottom{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.canvas-wrap{width:100%;height:360px;border-radius:16px;overflow:hidden;background:rgba(2,6,23,.35)}
+canvas{width:100%;height:100%;display:block}
+.small{color:var(--muted);font-size:13px}
+@media (max-width:960px){
+  .hero,.grid{grid-template-columns:1fr;gap:16px}
+  h1{font-size:30px;line-height:1.15}
+  .subtitle{font-size:15px;margin-top:12px}
+  .result-value{font-size:24px}
+  .stats{grid-template-columns:1fr 1fr;gap:12px}
+  .bottom{grid-template-columns:1fr;gap:12px}
+  .box,.card{padding:18px}
+  .stat,.info{padding:16px}
+  .stat-value{font-size:22px}
+  .canvas-wrap{height:240px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="badge">Российский рынок — стратегия автора Владимир Фокейчев</div>
+      <h1>Калькулятор доходности стратегии на российском рынке</h1>
+      <div class="subtitle">
+        Калькулятор использует исторические данные стратегии <b>«Стратегия Россия»</b> и сравнивает их с <b>Индексом МосБиржи</b>.
+        Можно выбрать стартовую сумму, ежемесячное пополнение и инвестиционный период, а ниже — увидеть ключевые метрики стратегии и сравнение с бенчмарком.
+      </div>
+    </div>
+    <div class="box">
+      <div class="result-label">Ключевой результат</div>
+      <div class="result-value" id="heroResult">—</div>
+      <div class="hint" id="heroSub">—</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <div class="panel-title">Параметры калькулятора</div>
+
+      <div class="field">
+        <label>Модель</label>
+        <select id="seriesKey">
+          <option value="strategy">Стратегия Россия</option>
+          <option value="benchmark">Индекс МосБиржи</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Стартовая сумма</label>
+        <input type="number" id="initial" value="1000000"/>
+        <div class="hint" id="initialHint"></div>
+      </div>
+
+      <div class="field">
+        <label>Ежемесячное пополнение</label>
+        <input type="number" id="contribution" value="0"/>
+        <div class="hint" id="contributionHint"></div>
+      </div>
+
+      <div class="field">
+        <label>Дата начала</label>
+        <input type="date" id="startDate"/>
+      </div>
+
+      <div class="field">
+        <label>Дата окончания</label>
+        <input type="date" id="endDate"/>
+      </div>
+
+      <div class="field">
+        <label>Безрисковая ставка для Sharpe, %</label>
+        <input type="number" id="rf" value="0" step="0.1"/>
+      </div>
+
+      <div class="small" id="datasetInfo"></div>
+    </div>
+
+    <div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-title">Итоговый капитал</div>
+          <div class="stat-value" id="kpiFinal">—</div>
+          <div class="stat-hint">на конец периода</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">Чистая прибыль</div>
+          <div class="stat-value" id="kpiProfit">—</div>
+          <div class="stat-hint">после взносов</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">Доходность</div>
+          <div class="stat-value" id="kpiReturn">—</div>
+          <div class="stat-hint">total return</div>
+        </div>
+        <div class="stat">
+          <div class="stat-title">CAGR</div>
+          <div class="stat-value" id="kpiCagr">—</div>
+          <div class="stat-hint">годовая</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Описание</div>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td><b>Автор стратегии</b></td><td style="text-align:left">Владимир Фокейчев</td></tr>
+              <tr><td><b>Рынок</b></td><td style="text-align:left">Российский рынок</td></tr>
+              <tr><td><b>Основная модель</b></td><td style="text-align:left">Стратегия Россия</td></tr>
+              <tr><td><b>Бенчмарк</b></td><td style="text-align:left">Индекс МосБиржи</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">График капитала по выбранной модели</div>
+        <div class="canvas-wrap"><canvas id="chart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Метрики выбранной модели на выбранном периоде</div>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td>Годовая доходность (CAGR)</td><td id="mCagr">—</td></tr>
+              <tr><td>Годовая волатильность</td><td id="mVol">—</td></tr>
+              <tr><td>Максимальная просадка</td><td id="mMdd">—</td></tr>
+              <tr><td>Sharpe</td><td id="mSharpe">—</td></tr>
+              <tr><td>Calmar</td><td id="mCalmar">—</td></tr>
+              <tr><td>Win rate по месяцам</td><td id="mWin">—</td></tr>
+              <tr><td>Лучший месяц</td><td id="mBest">—</td></tr>
+              <tr><td>Худший месяц</td><td id="mWorst">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Сравнение за всю историю файла</div>
+        <div class="table-wrap">
+          <table id="comparisonTable">
+            <thead>
+              <tr>
+                <th>Метрика</th>
+                <th>Стратегия Россия</th>
+                <th>Индекс МосБиржи</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bottom">
+        <div class="info">
+          <div class="stat-title">Сумма взносов</div>
+          <div class="stat-value" id="infoContrib">—</div>
+          <div class="hint">Стартовый капитал + все ежемесячные пополнения.</div>
+        </div>
+        <div class="info">
+          <div class="stat-title">Период анализа</div>
+          <div class="stat-value" id="infoPeriod">—</div>
+          <div class="hint">Только фактические точки из модели.</div>
+        </div>
+        <div class="info">
+          <div class="stat-title">Количество наблюдений</div>
+          <div class="stat-value" id="infoObs">—</div>
+          <div class="hint">Количество периодов в выборке.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = [["2012-03-31", 100.0, 100.0], ["2012-04-01", 100.40731534341192, 97.11073325688376], ["2012-05-01", 102.14864442685963, 86.0993580871789], ["2012-06-01", 103.71045588147987, 91.44423794271556], ["2012-07-01", 104.96874636328053, 92.72938168109982], ["2012-08-01", 106.11109397716127, 93.77660906586529], ["2012-09-01", 108.96898108408284, 96.10634399673113], ["2012-10-01", 106.71866534023094, 93.96048347766487], ["2012-11-01", 108.34201149491169, 92.66018163364836], ["2012-12-01", 109.38380356983635, 97.19113712154164], ["2013-01-01", 112.87221498008691, 101.93891942478282], ["2013-02-01", 110.784766350949, 97.93717953787548], ["2013-03-01", 110.9831268721035, 94.80867834499847], ["2013-04-01", 107.2196013287217, 91.33615405907707], ["2013-05-01", 105.91496708799565, 88.98269339765643], ["2013-06-01", 106.52397814875162, 87.68370964978186], ["2013-07-01", 107.13649102310694, 90.67117455547209], ["2013-08-01", 110.17191801259682, 89.93699500441565], ["2013-09-01", 106.25199238185623, 96.40686991709177], ["2013-10-01", 108.70234396951729, 99.53009872540106], ["2013-11-01", 106.44040103526703, 97.49627637839906], ["2013-12-01", 107.05243334121981, 99.12610225789871], ["2014-01-01", 104.40242911037066, 95.85524668169299], ["2014-02-01", 109.1741629404606, 95.21333386057182], ["2014-03-01", 107.50720995775573, 90.24279330934401], ["2014-04-01", 108.12537641501282, 86.0723371162693], ["2014-05-01", 108.74709732939915, 94.37766090658657], ["2014-06-01", 111.24662504797033, 97.30053910132212], ["2014-07-01", 110.27102974525954, 90.92293091858124], ["2014-08-01", 111.93058088624304, 92.31352234832015], ["2014-09-01", 112.81618760825225, 92.99629614984123], ["2014-10-01", 116.88802017366552, 98.09732821912037], ["2014-11-01", 125.47615193917525, 101.076884547959], ["2014-12-01", 128.8129223321153, 92.04331263922396], ["2015-01-01", 149.70073756628872, 108.59069160504575], ["2015-02-01", 142.94507138417885, 115.92457853875871], ["2015-03-01", 147.3959640893521, 107.17307920439725], ["2015-04-01", 152.4327966669671, 111.26972201352376], ["2015-05-01", 149.78670327991986, 106.05335653182553], ["2015-06-01", 152.24218431457055, 109.04279858172865], ["2015-07-01", 151.4144381871338, 109.99512304427495], ["2015-08-01", 152.53984536991243, 114.22423451566569], ["2015-09-01", 148.23283497029567, 108.27962091554969], ["2015-10-01", 152.5925063906689, 112.79805449009461], ["2015-11-01", 156.5573609872742, 116.720708608486], ["2015-12-01", 157.00369457839574, 116.08209102771966], ["2016-01-01", 162.28177445031815, 117.63480828291625], ["2016-02-01", 173.30595728562156, 121.27604887500505], ["2016-03-01", 166.58610712773395, 123.31777979885862], ["2016-04-01", 171.24404487409285, 128.7153835000726], ["2016-05-01", 169.53707590152692, 125.15388772457072], ["2016-06-01", 171.89484350954038, 124.6319216523654], ["2016-07-01", 176.96340951819025, 128.159805976248], ["2016-08-01", 174.48376728673202, 129.9372586236441], ["2016-09-01", 175.715050091198, 130.35970843713352], ["2016-10-01", 175.5458851092094, 131.12684039173828], ["2016-11-01", 181.06988436303973, 138.72368750576678], ["2016-12-01", 187.01983494807973, 147.146980900787], ["2017-01-01", 187.64620374298042, 146.13666020799567], ["2017-02-01", 189.07350292656025, 134.1670291431058], ["2017-03-01", 187.80819457778006, 131.53940448416319], ["2017-04-01", 189.87913941970208, 132.91088351984402], ["2017-05-01", 184.8198259273662, 125.2441773102931], ["2017-06-01", 185.71782121940467, 123.86808493811546], ["2017-07-01", 187.8780597120288, 126.50625436619355], ["2017-08-01", 195.98507391936758, 133.27401900694645], ["2017-09-01", 195.11107286224626, 136.89680625304817], ["2017-10-01", 195.45705008112796, 136.04795233764358], ["2017-11-01", 196.5881211182287, 138.4409558833222], ["2017-12-01", 195.9069925511416, 139.04200772404346], ["2018-01-01", 206.0039861763924, 150.92134920321098], ["2018-02-01", 207.97882636307116, 151.37016093953903], ["2018-03-01", 209.31246143232215, 149.66849882030405], ["2018-04-01", 217.0711377520562, 152.04370806806656], ["2018-05-01", 216.0177052869273, 151.77086216668653], ["2018-06-01", 216.26512382894052, 151.31414185350687], ["2018-07-01", 218.02318917098367, 152.97230680005808], ["2018-08-01", 219.76287179364232, 154.6027917276287], ["2018-09-01", 220.14854163690765, 163.13812329471324], ["2018-10-01", 214.80224577798515, 155.0548987043116], ["2018-11-01", 217.35096078065172, 157.6772509786865], ["2018-12-01", 225.7789159698451, 156.15023659825758], ["2019-01-01", 226.3319052841414, 166.1526091713131], ["2019-02-01", 224.1530906796111, 163.79123993304086], ["2019-03-01", 225.96392135183106, 164.57089380099399], ["2019-04-01", 228.84406289890526, 168.6714908985463], ["2019-05-01", 234.71522645535498, 175.65805949886], ["2019-06-01", 241.96630273896437, 182.28281070821325], ["2019-07-01", 245.22962150481263, 180.54621904121706], ["2019-08-01", 261.3306976292048, 180.58180763704922], ["2019-09-01", 256.09560081080735, 181.05236795971916], ["2019-10-01", 263.0472626436559, 190.7271936415044], ["2019-11-01", 265.7700446419155, 193.45499360723392], ["2019-12-01", 272.6578787976233, 200.7374747914115], ["2020-01-01", 286.3706036522117, 202.76602475384576], ["2020-02-01", 289.1522170633747, 183.5501601486814], ["2020-03-01", 308.2491050192367, 165.34263909209554], ["2020-04-01", 308.46330978373953, 174.6846454980428], ["2020-05-01", 318.7153437275887, 180.23844359207578], ["2020-06-01", 326.8032527476917, 180.7900668274746], ["2020-07-01", 364.1139972103072, 191.88645919833414], ["2020-08-01", 371.07039273537004, 195.48683881002302], ["2020-09-01", 377.7393575112995, 191.50684750945754], ["2020-10-01", 376.9814438022897, 177.3228149261209], ["2020-11-01", 381.7749605659941, 204.80446043734452], ["2020-12-01", 384.34506968037306, 216.762228636957], ["2021-01-01", 389.9212585204649, 215.97532524022324], ["2021-02-01", 393.7991497478923, 220.5596636218648], ["2021-03-01", 407.1177407554532, 233.4163733902753], ["2021-04-01", 418.43977701530724, 233.56663635045564], ["2021-05-01", 402.096245651334, 245.27330723502996], ["2021-06-01", 408.774544972006, 253.1963831441868], ["2021-07-01", 402.9077008070844, 248.56525234950664], ["2021-08-01", 404.002994140218, 258.27830281940794], ["2021-09-01", 408.280042081463, 270.441694017162], ["2021-10-01", 411.1569589901554, 273.5049494510133], ["2021-11-01", 396.6589441290365, 256.40858344207663], ["2021-12-01", 398.32491169437844, 249.5986397247819], ["2022-01-01", 403.4259717874515, 232.66901287779964], ["2022-02-01", 434.31495912179247, 162.81650783608183], ["2022-03-01", 439.85413880282533, 178.17430503380947], ["2022-04-01", 437.3535145242592, 161.14845716846614], ["2022-05-01", 448.16925471865034, 155.2552493178855], ["2022-06-01", 468.75232332648966, 145.31021392700407], ["2022-07-01", 478.6745597209102, 145.9007209985899], ["2022-08-01", 490.16406774934524, 158.17680941647913], ["2022-09-01", 438.4840332981766, 128.99613797830438], ["2022-10-01", 449.5360938897959, 142.79001410362898], ["2022-11-01", 498.86683566484186, 143.3119801758343], ["2022-12-01", 495.8218967364548, 141.96686306299205], ["2023-01-01", 498.7276527347909, 146.67773867425916], ["2023-02-01", 509.04096188188146, 148.49407515784225], ["2023-03-01", 571.3121845074019, 161.5109336074976], ["2023-04-01", 608.0958756113631, 173.65521241119356], ["2023-05-01", 619.6389076736742, 179.10553995808482], ["2023-06-01", 634.4270484833431, 184.36013022789908], ["2023-07-01", 697.1389528876634, 202.55842461149146], ["2023-08-01", 739.6450406655393, 212.74005825984977], ["2023-09-01", 707.8778257452698, 206.49689588358606], ["2023-10-01", 715.214892616987, 210.95931037209883], ["2023-11-01", 715.3289715348036, 208.6407792584394], ["2023-12-01", 717.8685323770665, 204.24624672123616], ["2024-01-01", 719.4737276818826, 211.83057192191632], ["2024-02-01", 718.5378462599203, 214.6387757523037], ["2024-03-01", 770.6850496612742, 219.62974679373147], ["2024-04-01", 806.517118245882, 228.6784768080987], ["2024-05-01", 759.8414930036449, 212.0282863432062], ["2024-06-01", 768.7159776165884, 207.88748731332495], ["2024-07-01", 767.8096321875089, 193.93675774711033], ["2024-08-01", 806.3441202651225, 174.6688283443397], ["2024-09-01", 842.2963344169657, 185.3210223153679], ["2024-10-01", 871.3778790105207, 181.3634386492153], ["2024-11-01", 920.0251208001339, 169.90259269511142], ["2024-12-01", 900.501821918606, 191.45346461570932], ["2025-01-01", 900.1598809882265, 194.29396180157406], ["2025-02-01", 901.4063826512551, 208.36793335705931], ["2025-03-01", 891.5411928740133, 198.5949095127001], ["2025-04-01", 902.9664899721242, 192.3412023673009], ["2025-05-01", 921.178829108129, 186.1817390960499], ["2025-06-01", 962.932550625124, 185.52796340965133], ["2025-07-01", 1006.0805753522769, 179.69209274124475], ["2025-08-01", 1018.5483893128784, 190.62504119050465], ["2025-09-01", 1038.8149138702067, 176.2222046476072], ["2025-10-01", 1064.8714289920492, 166.42281888040935], ["2025-11-01", 1076.589015011135, 176.49307340477438], ["2025-12-01", 1104.9549469422236, 182.33355740967772], ["2026-01-01", 1179.4207445479399, 183.3959429000754], ["2026-02-01", 1212.951947727972, 184.47678173646014], ["2026-03-01", 1169.7664733776483, 183.93702136633874]];
+const SERIES_MAP = {
+  strategy: { name: "Стратегия Россия", index: 1, color: "#60a5fa" },
+  benchmark: { name: "Индекс МосБиржи", index: 2, color: "#22c55e" }
+};
+
+const currency = new Intl.NumberFormat("ru-RU", {
+  style: "currency",
+  currency: "RUB",
+  maximumFractionDigits: 0
+});
+const pct = (v, digits=2) => `${(v*100).toFixed(digits)}%`;
+const money = (v) => currency.format(Number.isFinite(v) ? v : 0);
+
+const els = {
+  seriesKey: document.getElementById("seriesKey"),
+  initial: document.getElementById("initial"),
+  contribution: document.getElementById("contribution"),
+  startDate: document.getElementById("startDate"),
+  endDate: document.getElementById("endDate"),
+  rf: document.getElementById("rf"),
+  initialHint: document.getElementById("initialHint"),
+  contributionHint: document.getElementById("contributionHint"),
+  datasetInfo: document.getElementById("datasetInfo"),
+  heroResult: document.getElementById("heroResult"),
+  heroSub: document.getElementById("heroSub"),
+  kpiFinal: document.getElementById("kpiFinal"),
+  kpiProfit: document.getElementById("kpiProfit"),
+  kpiReturn: document.getElementById("kpiReturn"),
+  kpiCagr: document.getElementById("kpiCagr"),
+  mCagr: document.getElementById("mCagr"),
+  mVol: document.getElementById("mVol"),
+  mMdd: document.getElementById("mMdd"),
+  mSharpe: document.getElementById("mSharpe"),
+  mCalmar: document.getElementById("mCalmar"),
+  mWin: document.getElementById("mWin"),
+  mBest: document.getElementById("mBest"),
+  mWorst: document.getElementById("mWorst"),
+  infoContrib: document.getElementById("infoContrib"),
+  infoPeriod: document.getElementById("infoPeriod"),
+  infoObs: document.getElementById("infoObs"),
+};
+
+function getSeries(key) {
+  const idx = SERIES_MAP[key].index;
+  return DATA.map(r => ({ date: r[0], level: r[idx] }));
+}
+function filterSeries(series, start, end) {
+  return series.filter(d => d.date >= start && d.date <= end);
+}
+function dailyReturns(series) {
+  const out = [];
+  for (let i = 1; i < series.length; i++) out.push(series[i].level / series[i-1].level - 1);
+  return out;
+}
+function yearsBetween(start, end) {
+  return (new Date(end) - new Date(start)) / (365.25 * 24 * 3600 * 1000);
+}
+function monthlyReturns(series) {
+  const monthLast = new Map();
+  for (const row of series) monthLast.set(row.date.slice(0,7), row.level);
+  const keys = [...monthLast.keys()].sort();
+  const out = [];
+  for (let i = 1; i < keys.length; i++) {
+    const prev = monthLast.get(keys[i-1]);
+    const curr = monthLast.get(keys[i]);
+    out.push({ month: keys[i], ret: curr / prev - 1 });
+  }
+  return out;
+}
+function maxDrawdown(series) {
+  let peak = -Infinity, maxDd = 0;
+  for (const row of series) {
+    peak = Math.max(peak, row.level);
+    const dd = row.level / peak - 1;
+    maxDd = Math.min(maxDd, dd);
+  }
+  return maxDd;
+}
+function calcMetrics(series, rfAnnualPct=0) {
+  if (series.length < 3) return null;
+  const rets = dailyReturns(series);
+  const totalReturn = series[series.length-1].level / series[0].level - 1;
+  const yrs = Math.max(yearsBetween(series[0].date, series[series.length-1].date), 1/365);
+  const mean = rets.reduce((a,b)=>a+b,0) / rets.length;
+  const variance = rets.reduce((a,b)=>a+Math.pow(b-mean,2),0) / Math.max(rets.length-1,1);
+  const cagr = Math.pow(series[series.length-1].level / series[0].level, 1/yrs) - 1;
+  const vol = Math.sqrt(variance) * Math.sqrt(252);
+  const mdd = maxDrawdown(series);
+  const rf = rfAnnualPct / 100;
+  const sharpe = vol === 0 ? 0 : (cagr - rf) / vol;
+  const calmar = Math.abs(mdd) < 1e-9 ? 0 : cagr / Math.abs(mdd);
+  const mrets = monthlyReturns(series);
+  const positiveMonths = mrets.filter(x => x.ret > 0).length;
+  const winRate = mrets.length ? positiveMonths / mrets.length : 0;
+  const best = mrets.length ? mrets.reduce((a,b)=> a.ret > b.ret ? a : b) : null;
+  const worst = mrets.length ? mrets.reduce((a,b)=> a.ret < b.ret ? a : b) : null;
+  return { totalReturn, cagr, vol, mdd, sharpe, calmar, winRate, best, worst, observations: series.length };
+}
+function simulateInvestment(series, initial, monthlyContribution) {
+  if (!series.length) return null;
+  let units = initial / series[0].level;
+  let totalContrib = initial;
+  let lastMonth = series[0].date.slice(0,7);
+  const points = [{ date: series[0].date, value: initial }];
+  for (let i = 1; i < series.length; i++) {
+    const currentMonth = series[i].date.slice(0,7);
+    if (currentMonth !== lastMonth && monthlyContribution > 0) {
+      units += monthlyContribution / series[i].level;
+      totalContrib += monthlyContribution;
+      lastMonth = currentMonth;
+    }
+    points.push({ date: series[i].date, value: units * series[i].level });
+  }
+  const finalValue = points[points.length-1].value;
+  return {
+    points,
+    totalContrib,
+    finalValue,
+    profit: finalValue - totalContrib,
+    totalReturnOnContrib: totalContrib === 0 ? 0 : finalValue / totalContrib - 1
+  };
+}
+function drawChart(points, colorHex) {
+  const canvas = document.getElementById("chart");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(300, Math.round(rect.width));
+  const height = Math.max(220, Math.round(rect.height));
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+
+  const pad = {l: 52, r: 18, t: 18, b: 30};
+  const innerW = width - pad.l - pad.r;
+  const innerH = height - pad.t - pad.b;
+  const vals = points.map(p => p.value);
+  const minV = Math.min(...vals);
+  const maxV = Math.max(...vals);
+  const low = minV * 0.98;
+  const high = maxV * 1.02;
+  const x = i => pad.l + (i / Math.max(points.length-1,1)) * innerW;
+  const y = v => pad.t + innerH - ((v - low) / Math.max(high-low, 1e-9)) * innerH;
+
+  ctx.strokeStyle = "rgba(148,163,184,.18)";
+  ctx.fillStyle = "#94a3b8";
+  ctx.font = "11px Arial";
+  for (let p=0; p<=4; p++) {
+    const val = low + (high-low) * (p/4);
+    const yy = y(val);
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(width-pad.r, yy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText(Math.round(val).toLocaleString("ru-RU"), 6, yy+4);
+  }
+
+  ctx.beginPath();
+  points.forEach((pt, i) => { const xx=x(i), yy=y(pt.value); if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); });
+  ctx.lineTo(x(points.length-1), height-pad.b);
+  ctx.lineTo(x(0), height-pad.b);
+  ctx.closePath();
+
+  const grad = ctx.createLinearGradient(0, pad.t, 0, height-pad.b);
+  const rgba = colorHex === "#22c55e" ? "rgba(34,197,94,0.24)" : "rgba(96,165,250,0.24)";
+  grad.addColorStop(0, rgba);
+  grad.addColorStop(1, "rgba(96,165,250,0.03)");
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  points.forEach((pt, i) => { const xx=x(i), yy=y(pt.value); if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); });
+  ctx.strokeStyle = colorHex;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = "#94a3b8";
+  const step = Math.max(1, Math.ceil((points.length-1)/6));
+  for (let i=0; i<points.length; i+=step) {
+    const xx = x(i);
+    const label = points[i].date.slice(0,7);
+    ctx.fillText(label, xx-18, height-8);
+  }
+}
+function renderComparison() {
+  const tbody = document.querySelector("#comparisonTable tbody");
+  const s = calcMetrics(getSeries("strategy"), +els.rf.value || 0);
+  const b = calcMetrics(getSeries("benchmark"), +els.rf.value || 0);
+  const rows = [
+    ["Total return", pct(s.totalReturn), pct(b.totalReturn)],
+    ["CAGR", pct(s.cagr), pct(b.cagr)],
+    ["Volatility", pct(s.vol), pct(b.vol)],
+    ["Max drawdown", pct(s.mdd), pct(b.mdd)],
+    ["Sharpe", s.sharpe.toFixed(2), b.sharpe.toFixed(2)],
+    ["Calmar", s.calmar.toFixed(2), b.calmar.toFixed(2)],
+    ["Win rate", pct(s.winRate), pct(b.winRate)],
+    ["Best month", s.best ? `${s.best.month} (${pct(s.best.ret)})` : "—", b.best ? `${b.best.month} (${pct(b.best.ret)})` : "—"],
+    ["Worst month", s.worst ? `${s.worst.month} (${pct(s.worst.ret)})` : "—", b.worst ? `${b.worst.month} (${pct(b.worst.ret)})` : "—"]
+  ];
+  tbody.innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+}
+function recalc() {
+  els.initialHint.textContent = money(+els.initial.value || 0);
+  els.contributionHint.textContent = money(+els.contribution.value || 0);
+  const key = els.seriesKey.value;
+  const all = getSeries(key);
+  const start = els.startDate.value;
+  const end = els.endDate.value;
+  const filtered = filterSeries(all, start, end);
+  if (filtered.length < 3) return;
+  const metrics = calcMetrics(filtered, +els.rf.value || 0);
+  const sim = simulateInvestment(filtered, +els.initial.value || 0, +els.contribution.value || 0);
+
+  els.heroResult.textContent = money(sim.finalValue);
+  els.heroSub.textContent = `${SERIES_MAP[key].name} · ${filtered[0].date} → ${filtered[filtered.length-1].date}`;
+  els.kpiFinal.textContent = money(sim.finalValue);
+  els.kpiProfit.textContent = money(sim.profit);
+  els.kpiReturn.textContent = pct(sim.totalReturnOnContrib);
+  els.kpiCagr.textContent = pct(metrics.cagr);
+  els.mCagr.textContent = pct(metrics.cagr);
+  els.mVol.textContent = pct(metrics.vol);
+  els.mMdd.textContent = pct(metrics.mdd);
+  els.mSharpe.textContent = metrics.sharpe.toFixed(2);
+  els.mCalmar.textContent = metrics.calmar.toFixed(2);
+  els.mWin.textContent = pct(metrics.winRate);
+  els.mBest.textContent = metrics.best ? `${metrics.best.month} (${pct(metrics.best.ret)})` : "—";
+  els.mWorst.textContent = metrics.worst ? `${metrics.worst.month} (${pct(metrics.worst.ret)})` : "—";
+  els.infoContrib.textContent = money(sim.totalContrib);
+  els.infoPeriod.textContent = `${filtered[0].date} → ${filtered[filtered.length-1].date}`;
+  els.infoObs.textContent = metrics.observations.toLocaleString("ru-RU");
+  drawChart(sim.points, SERIES_MAP[key].color);
+  renderComparison();
+}
+function init() {
+  const minDate = DATA[0][0];
+  const maxDate = DATA[DATA.length-1][0];
+  els.startDate.min = minDate;
+  els.startDate.max = maxDate;
+  els.endDate.min = minDate;
+  els.endDate.max = maxDate;
+  els.startDate.value = minDate;
+  els.endDate.value = maxDate;
+  els.datasetInfo.textContent = `История в файле: ${minDate} → ${maxDate} · ${DATA.length.toLocaleString("ru-RU")} точек.`;
+  ["seriesKey","initial","contribution","startDate","endDate","rf"].forEach(id => {
+    document.getElementById(id).addEventListener("input", recalc);
+    document.getElementById(id).addEventListener("change", recalc);
+  });
+  window.addEventListener("resize", recalc);
+  recalc();
+}
+init();
+</script>
+</body>
+</html>
