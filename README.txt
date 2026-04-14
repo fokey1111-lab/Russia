@@ -1,1 +1,1 @@
-Apollo project with Excel autoload. Added optional 5-year extension without new contributions and without fees. To update data, replace data/sp500.xlsx and redeploy.
+Apollo project. Added separate optional +5-year scenario. CAGR is calculated correctly for each actual term: 15 years separately and 20 years separately. Update data by replacing data/sp500.xlsx.
