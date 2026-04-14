@@ -1,1 +1,1 @@
-Apollo project. Added separate optional +5-year scenario. CAGR is calculated correctly for each actual term: 15 years separately and 20 years separately. Update data by replacing data/sp500.xlsx.
+Apollo v3: в шапке добавлены корректные метрики Apollo (CAGR, Volatility, Max Drawdown, Sharpe). В шапке и описании указано: калькулятор сделал Фокейчев Владимир.
