@@ -1,0 +1,1 @@
+Apollo project with Excel autoload. Added optional 5-year extension without new contributions and without fees. To update data, replace data/sp500.xlsx and redeploy.
